@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Details - ThinkChain44</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="detail-content" id="service-content">
+            <a href="index.html" class="back-link">Back to Home</a>
+
+            <div id="loading">Loading service details...</div>
+        </div>
+
+        <footer>
+            <p>This is a personal landing page. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        async function loadService() {
+            const params = new URLSearchParams(window.location.search);
+            const serviceId = params.get('id');
+
+            if (!serviceId) {
+                document.getElementById('service-content').innerHTML = '<p>Service not found.</p><a href="index.html" class="back-link">Back to Home</a>';
+                return;
+            }
+
+            try {
+                const response = await fetch('services.json');
+                const services = await response.json();
+                const service = services.find(s => s.id === serviceId);
+
+                if (service) {
+                    renderService(service);
+                } else {
+                    document.getElementById('service-content').innerHTML = '<p>Service not found.</p><a href="index.html" class="back-link">Back to Home</a>';
+                }
+            } catch (error) {
+                console.error('Error loading services:', error);
+                document.getElementById('service-content').innerHTML = '<p>Error loading content.</p><a href="index.html" class="back-link">Back to Home</a>';
+            }
+        }
+
+        function renderService(service) {
+            const container = document.getElementById('service-content');
+
+            // Construct WhatsApp Link
+            const waText = encodeURIComponent(`Hi, I want to order ${service.title}`);
+            const waLink = `https://api.whatsapp.com/send?phone=9633839101&text=${waText}`;
+
+            // Construct GPay Link
+            // Note: pn (Payee Name) should be URL encoded, but simple strings work.
+            const upiLink = `upi://pay?pa=${service.upiId}&pn=${encodeURIComponent(service.title)}&am=${service.price}&cu=INR`;
+
+            const html = `
+                <a href="index.html" class="back-link">Back to Home</a>
+                
+                <header style="padding: 0; border: none; text-align: left;">
+                    <h1>${service.title}</h1>
+                    <p class="bio">ThinkChain44 Services</p>
+                </header>
+
+                <div class="detail-image" style="background: ${service.imageGradient || '#eee'}; display: flex; align-items: center; justify-content: center; color: #555; font-weight: 500;">
+                    ${service.imagePlaceholder || 'Service Image'}
+                </div>
+
+                <p style="margin-bottom: 24px; line-height: 1.6;">
+                    ${service.detailDescription}
+                </p>
+
+                <div class="links-section" style="padding: 0;">
+                    <a href="${waLink}" target="_blank" rel="noopener" class="btn btn-whatsapp">
+                        Order on WhatsApp
+                    </a>
+                    <div class="alt-instructions">
+                        Message +91 9633839101 to order manually.
+                    </div>
+
+                    <a href="${upiLink}" class="btn btn-gpay">
+                        Pay Now (₹${service.price})
+                    </a>
+                    <div class="alt-instructions">
+                        UPI ID: ${service.upiId}
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+            document.title = `${service.title} - ThinkChain44`;
+        }
+
+        loadService();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "restore-old-photo",
+    "title": "Restore Old Photo",
+    "description": "Bring your cherished memories back to life with professional photo restoration.",
+    "detailDescription": "Don't let your precious memories fade away. We specialize in restoring old, damaged, or faded photographs to their former glory. Once restored, we can also frame them beautifully and deliver them to your doorstep. Perfect for gifts or preserving family history.",
+    "price": "1000",
+    "upiId": "9633839101@upi",
+    "imagePlaceholder": "Service Image",
+    "imageGradient": "linear-gradient(135deg, #eee 0%, #ccc 100%)"
+  },
+  {
+    "id": "custom-calendar-2026",
+    "title": "2026 Customised Calendar",
+    "description": "Get a personalized calendar for the upcoming year with your favorite photos.",
+    "detailDescription": "Get ready for 2026 with a fully customized calendar. Choose your favorite photos for each month. High-quality printing and various size options available. A perfect gift for yourself or your loved ones to cherish memories all year round.",
+    "price": 480,
+    "upiId": "9633839101@upi",
+    "imagePlaceholder": "Calendar Preview",
+    "imageGradient": "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)"
+  }
+]

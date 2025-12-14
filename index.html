@@ -44,16 +44,9 @@
         <section class="services-section">
             <h3 class="section-title">Available Services</h3>
 
-            <div class="service-card">
-                <h2>Restore Old Photo</h2>
-                <p>Bring your cherished memories back to life with professional photo restoration.</p>
-                <a href="restore-old-photo.html" class="service-link">Learn more & Order</a>
-            </div>
-
-            <div class="service-card">
-                <h2>2026 Customised Calendar</h2>
-                <p>Get a personalized calendar for the upcoming year with your favorite photos.</p>
-                <a href="custom-calendar-2026.html" class="service-link">Learn more & Order</a>
+            <div id="services-container">
+                <!-- Services will be loaded here dynamically -->
+                <div style="text-align: center; color: var(--secondary-text);">Loading services...</div>
             </div>
         </section>
 
@@ -62,6 +55,37 @@
             <p>For any queries, contact via WhatsApp.</p>
         </footer>
     </div>
+
+    <script>
+        async function loadServices() {
+            try {
+                const response = await fetch('services.json');
+                const services = await response.json();
+                const container = document.getElementById('services-container');
+
+                if (services.length === 0) {
+                    container.innerHTML = '<p>No services available at the moment.</p>';
+                    return;
+                }
+
+                container.innerHTML = services.map(service => `
+                    <div class="service-card">
+                        <h2>${service.title}</h2>
+                        <p>${service.description}</p>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <a href="service.html?id=${service.id}" class="service-link" style="flex: 1; white-space: nowrap;">Learn more</a>
+                            <a href="upi://pay?pa=${service.upiId}&pn=${encodeURIComponent(service.title)}&am=${service.price}&cu=INR" class="btn btn-gpay" style="padding: 8px 16px; font-size: 14px; min-height: 40px; width: auto;">Pay ₹${service.price}</a>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading services:', error);
+                document.getElementById('services-container').innerHTML = '<p>Failed to load services.</p>';
+            }
+        }
+
+        loadServices();
+    </script>
 </body>
 
 </html>

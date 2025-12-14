@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - ThinkChain44</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .login-form {
+            max-width: 300px;
+            margin: 100px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .service-item {
+            border: 1px solid #eee;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+            min-height: auto;
+            width: auto;
+            display: inline-block;
+            margin-left: 5px;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+            border: none;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Login View -->
+    <div id="login-view" class="container login-form">
+        <h2 style="text-align: center; margin-bottom: 20px;">Admin Login</h2>
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="username" placeholder="Enter username">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="password" placeholder="Enter password">
+        </div>
+        <button onclick="login()" class="btn btn-primary" style="width: 100%;">Login</button>
+        <p id="login-error" style="color: red; text-align: center; margin-top: 10px; display: none;"></p>
+    </div>
+
+    <!-- Dashboard View -->
+    <div id="dashboard-view" class="admin-container hidden">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1>Dashboard</h1>
+            <button onclick="logout()" class="btn btn-outline"
+                style="width: auto; min-height: auto; padding: 8px 16px;">Logout</button>
+        </header>
+
+        <div style="margin-bottom: 20px;">
+            <button onclick="openModal()" class="btn btn-primary" style="width: auto;">+ Add New Service</button>
+        </div>
+
+        <div id="services-list">
+            <!-- Services loaded here -->
+        </div>
+    </div>
+
+    <!-- Edit/Add Modal -->
+    <div id="service-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="modal-title" style="margin-bottom: 15px;">Add Service</h2>
+            <input type="hidden" id="service-id">
+            <div class="form-group">
+                <label>ID (URL slug)</label>
+                <input type="text" id="service-slug" placeholder="e.g., restore-old-photo">
+            </div>
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="service-title">
+            </div>
+            <div class="form-group">
+                <label>Short Description</label>
+                <textarea id="service-desc" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Detailed Description</label>
+                <textarea id="service-detail" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Price (INR)</label>
+                <input type="number" id="service-price">
+            </div>
+            <div class="form-group">
+                <label>UPI ID</label>
+                <input type="text" id="service-upi" value="9633839101@upi">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="saveService()" class="btn btn-primary">Save</button>
+                <button onclick="closeModal()" class="btn btn-outline">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let servicesData = [];
+
+        // Auth Check
+        if (localStorage.getItem('authToken')) {
+            showDashboard();
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    localStorage.setItem('authToken', data.token);
+                    showDashboard();
+                } else {
+                    document.getElementById('login-error').innerText = data.message;
+                    document.getElementById('login-error').style.display = 'block';
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Login failed');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('authToken');
+            location.reload();
+        }
+
+        function showDashboard() {
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            loadServices();
+        }
+
+        async function loadServices() {
+            const res = await fetch('/api/services');
+            servicesData = await res.json();
+            renderList();
+        }
+
+        function renderList() {
+            const container = document.getElementById('services-list');
+            container.innerHTML = servicesData.map(s => `
+                <div class="service-item">
+                    <div>
+                        <strong>${s.title}</strong>
+                        <div style="font-size: 12px; color: #666;">ID: ${s.id} | Price: ₹${s.price}</div>
+                    </div>
+                    <div>
+                        <button onclick="editService('${s.id}')" class="btn btn-sm btn-primary">Edit</button>
+                        <button onclick="deleteService('${s.id}')" class="btn btn-sm btn-danger">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openModal(isEdit = false) {
+            document.getElementById('service-modal').classList.remove('hidden');
+            document.getElementById('modal-title').innerText = isEdit ? 'Edit Service' : 'Add New Service';
+            if (!isEdit) {
+                document.getElementById('service-id').value = '';
+                document.getElementById('service-slug').value = '';
+                document.getElementById('service-title').value = '';
+                document.getElementById('service-desc').value = '';
+                document.getElementById('service-detail').value = '';
+                document.getElementById('service-price').value = '';
+                document.getElementById('service-slug').disabled = false;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('service-modal').classList.add('hidden');
+        }
+
+        function editService(id) {
+            const s = servicesData.find(x => x.id === id);
+            if (!s) return;
+
+            document.getElementById('service-id').value = id; // Original ID to track edits
+            document.getElementById('service-slug').value = s.id;
+            document.getElementById('service-slug').disabled = true; // Prevent ID change for simplicity
+            document.getElementById('service-title').value = s.title;
+            document.getElementById('service-desc').value = s.description;
+            document.getElementById('service-detail').value = s.detailDescription;
+            document.getElementById('service-price').value = s.price;
+            document.getElementById('service-upi').value = s.upiId;
+
+            openModal(true);
+        }
+
+        async function saveService() {
+            const id = document.getElementById('service-slug').value;
+            const title = document.getElementById('service-title').value;
+            const description = document.getElementById('service-desc').value;
+            const detailDescription = document.getElementById('service-detail').value;
+            const price = document.getElementById('service-price').value;
+            const upiId = document.getElementById('service-upi').value;
+
+            if (!id || !title) {
+                alert('ID and Title are required');
+                return;
+            }
+
+            const newService = {
+                id,
+                title,
+                description,
+                detailDescription,
+                price,
+                upiId,
+                imagePlaceholder: 'Service Image', // Default for new items
+                imageGradient: 'linear-gradient(135deg, #eee 0%, #ccc 100%)'
+            };
+
+            // Check if updating existing
+            const existingIndex = servicesData.findIndex(s => s.id === id);
+            if (existingIndex >= 0) {
+                servicesData[existingIndex] = { ...servicesData[existingIndex], ...newService };
+            } else {
+                servicesData.push(newService);
+            }
+
+            await saveToServer();
+            closeModal();
+            renderList();
+        }
+
+        async function deleteService(id) {
+            if (!confirm('Are you sure you want to delete this service?')) return;
+            servicesData = servicesData.filter(s => s.id !== id);
+            await saveToServer();
+            renderList();
+        }
+
+        async function saveToServer() {
+            await fetch('/api/services', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(servicesData)
+            });
+        }
+    </script>
+</body>
+
+</html>
