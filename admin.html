@@ -175,28 +175,17 @@
             showDashboard();
         }
 
-        async function login() {
+        function login() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
-            try {
-                const res = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                const data = await res.json();
-
-                if (data.success) {
-                    localStorage.setItem('authToken', data.token);
-                    showDashboard();
-                } else {
-                    document.getElementById('login-error').innerText = data.message;
-                    document.getElementById('login-error').style.display = 'block';
-                }
-            } catch (e) {
-                console.error(e);
-                alert('Login failed');
+            // Static credential check (Note: Visible in source code, but sufficient for personal dashboard)
+            if (username === 'tc' && password === 'Syd@44') {
+                localStorage.setItem('authToken', 'static-session');
+                showDashboard();
+            } else {
+                document.getElementById('login-error').innerText = 'Invalid credentials';
+                document.getElementById('login-error').style.display = 'block';
             }
         }
 
@@ -212,9 +201,15 @@
         }
 
         async function loadServices() {
-            const res = await fetch('/api/services');
-            servicesData = await res.json();
-            renderList();
+            try {
+                // Fetch directly from the JSON file instead of an API endpoint
+                const res = await fetch('services.json');
+                servicesData = await res.json();
+                renderList();
+            } catch (error) {
+                console.error('Error loading services:', error);
+                alert('Failed to load services.json');
+            }
         }
 
         function renderList() {
@@ -299,7 +294,7 @@
                 servicesData.push(newService);
             }
 
-            await saveToServer();
+            saveChanges();
             closeModal();
             renderList();
         }
@@ -307,16 +302,22 @@
         async function deleteService(id) {
             if (!confirm('Are you sure you want to delete this service?')) return;
             servicesData = servicesData.filter(s => s.id !== id);
-            await saveToServer();
+            saveChanges();
             renderList();
         }
 
-        async function saveToServer() {
-            await fetch('/api/services', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(servicesData)
-            });
+        function saveChanges() {
+            // Since we are on a static site, we cannot write to the server.
+            // Instead, we will trigger a download of the updated JSON file.
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(servicesData, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "services.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+
+            alert('Changes saved locally! A "services.json" file has been downloaded.\n\nPlease replace the file in your repository with this new one and push to GitHub to go live.');
         }
     </script>
 </body>
